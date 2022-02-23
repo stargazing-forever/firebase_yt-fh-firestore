@@ -2,109 +2,62 @@ import db from './firebase/config';
 import { getDocuments } from './helpers/getDocuments';
 
 const usuario = {
-    nombre: 'Simon',
+    nombre: 'sandra',
     activo: true, 
     fechaNaci: 0,
+    salario: 2500,
 }
 
 const usuariosRef = db.collection('usuarios');
 
-// 03 Insertar data en Firebase
-// AGREGAR UN DOCUMENTO
-// insert into usuarios... en sql
-// db.collection('usuarios')
-//     .add(usuario)
-//     .then(docRef => console.log(docRef))
-//     .catch(e => console.log('error', e));
+// 10 Limit y Paginacion
+
+//limit
+// usuariosRef.limit(1)
+//     .get().then( getDocuments)
+
+//logica para hacer paginacion
+    //1. guardar la referencia al ultimo doc traido
+    //2. traer los documentos limitados ej. limit(2) apartie del ult doc traido
+    //3. guardar la referencia del nuevo ultimo doc traido
+
+const btnPrevious = document.createElement('button');
+btnPrevious.innerText = 'Previous Page'
+document.body.append(btnPrevious);
+
+const btnNext = document.createElement('button');
+btnNext.innerText = 'Next Page';
+document.body.append(btnNext);
+
+let lastDocument: any = null;
+let firstDocument: any = null; 
+
+btnNext.addEventListener('click', () => {
+    const query = usuariosRef
+                    .orderBy('nombre')
+                    .startAfter(lastDocument) //if null lo ignora
+    
+    query.limit(1).get().then( snap => {
+        firstDocument = snap.docs[0] || null
+        lastDocument = snap.docs[snap.docs.length - 1] || null;
+        getDocuments(snap);
+    })
+
+});
+
+btnPrevious.addEventListener('click', () => {
+    const query = usuariosRef
+                    .orderBy('nombre')
+                    .endBefore(firstDocument)
+                
+    query.limitToLast(1).get().then( snap => {
+        firstDocument = snap.docs[0] || null
+        lastDocument = snap.docs[snap.docs.length - 1] || null
+        getDocuments(snap);
+    })
+})
+
+btnNext.click();
 
 
-// 04 Actualizar data en Firebase
-// ACTUALIZAR UN DOCUMENTO
-//update usuarios set activo = false where ... en sql
-//actualizaa los campos enviados solamente, no reemplaza todo el documento
-// usuariosRef
-//     .doc('nvy5G1M7g5sbxjzYKy48')
-//     .update({
-//         activo: true,
-//     });
-
-// REEMPLAZAR UN DOCUMENTO
-//destructivo, reemplaza el objeto enviado en el documento
-// usuariosRef
-//     .doc('nvy5G1M7g5sbxjzYKy48')
-//     .set({
-//         activo: true,
-//         age: 4,
-//     });
-
-
-// 05 Borrar informacion en firestore
-// delete from usuarios where id = 'xx'   en sql
-// usuariosRef
-//     .doc('kSiqkdDjmWoncTb6cW2y')
-//     .delete()
-//     .then(console.log)
-//     .catch(console.log)
-
-
-// 06 Seleccionar todos los registros de una coleccion
-// select * from usuarios; en sql
-//utilizando onSnapShot para que cuando se modifique algo en la base de datos, se vuelva a llamar la funcion. Comunicaion por sockets.
-// usuariosRef
-//     .onSnapshot( snap => {
-
-//         const usuarios: any = [];
-
-//         snap.forEach( snapHijo => {
-
-//             usuarios.push({
-//                 id: snapHijo.id,
-//                 ...snapHijo.data(),
-//             });
-//         });
-
-//         console.log(usuarios);
-//     })
-
-
-// 07 Optimizando el codigo
-
-// con el metodo del socket io
-// usuariosRef
-//     .onSnapshot( getDocuments);
-
-//solo recuperar los documentos sin tiempo real.
-// usuariosRef
-//     .get().then(getDocuments);
-
-
-// 08 Indices y Clausula where
-
-//select * from usuarios where activo = true
-// usuariosRef
-//     .where('activo', '==', true)
-//     .get().then(getDocuments);
-
-//select * from usuarios where salario > 1800
-// usuariosRef
-//     .where('salario', '>', 1800)
-//     .get()
-//     .then(getDocuments)
-
-//consultas compuestas
-//select * from usuarios where salario > 1800 and salario < 2300
-// usuariosRef
-// .where('salario', '>', 1800)
-// .where('salario', '<', 2300)
-// .get()
-// .then(getDocuments)
-
-
-//select * from usuarios where salario >= 1800 and activo < true
-// en este tipo de consulta compuesta se debe crear un indice
-usuariosRef
-.where('salario', '>=', 1800)
-.where('activo', '==', true)
-.get()
-.then(getDocuments)
 
